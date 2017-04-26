@@ -1,13 +1,37 @@
 import helpers = require('../modules/helpers');
 import { NextFunction, Request, Response } from "express";
 
+class FunctionUtil
+  {
+    /**
+     * Bind all methods on `scope` to that `scope`.
+     *
+     * @param scope     Usually, pass the value of `this` from your base class.
+     */
+    static bindAllMethods( scope )
+    {
+      for (var p in scope)
+      {
+        // Don't bind if scope[p] is a getter/setter
+        var descriptor = Object.getOwnPropertyDescriptor( Object.getPrototypeOf( scope ), p );
+        if (descriptor && (descriptor.get || descriptor.set))
+          continue;
+
+        // Only bind if scope[p] is a function that's not already a class member
+        // the bound function will be added as a class member, referencing the function on the prototype
+        if (!Object.prototype.hasOwnProperty.call( scope, p ) && typeof scope[p] == 'function')
+          scope[p] = scope[p].bind( scope );
+      }
+    }
+  }
 
 export class MainController {
 
     private model: any;
 
     constructor (model){
-        this.model = model
+        this.model = model;
+        FunctionUtil.bindAllMethods( this );
     }
 
     public get (req:Request, res:Response, cb?: Function){
